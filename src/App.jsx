@@ -27,16 +27,15 @@ const initialProjects = [
 ];
 
 const initialTasks = [
-  { id: 't1', projectId: 'p1', title: 'Sätta upp React-projekt', status: 'done' },
-  { id: 't2', projectId: 'p1', title: 'Skapa Kanban-vy', status: 'progress' },
-  { id: 't3', projectId: 'p2', title: 'Fixa "Explore"-sidan', status: 'done' },
-  { id: 't4', projectId: 'p2', title: 'Länka till produkter', status: 'todo' },
-  { id: 't5', projectId: 'p3', title: 'Bestämma strategi', status: 'todo' },
+  { id: 't1', projectId: 'p1', title: 'Sätta upp React-projekt', status: 'done', date: '2026-02-24' },
+  { id: 't2', projectId: 'p1', title: 'Skapa Kanban-vy', status: 'progress', date: '2026-02-25' },
+  { id: 't3', projectId: 'p2', title: 'Fixa "Explore"-sidan', status: 'done', date: '2026-02-23' },
+  { id: 't4', projectId: 'p2', title: 'Länka till produkter', status: 'todo', date: '' },
+  { id: 't5', projectId: 'p3', title: 'Bestämma strategi', status: 'todo', date: '2026-02-28' },
 ];
 
 // --- KOMPONENTER ---
 
-// Det enskilda kortet (Task)
 function SortableItem({ task, project, onClick }) {
   const {
     attributes,
@@ -50,7 +49,7 @@ function SortableItem({ task, project, onClick }) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.0 : 1, // Gör originalkortet osynligt när vi drar
   };
 
   return (
@@ -63,23 +62,28 @@ function SortableItem({ task, project, onClick }) {
       onClick={() => onClick(task)}
     >
       <h3>{task.title}</h3>
-      <span className="tag" style={{backgroundColor: '#333'}}>{project?.title || 'Okänt projekt'}</span>
+      <div className="card-meta">
+        <span className="tag">{project?.title || 'No Project'}</span>
+        {task.date && (
+          <span className="date-badge">
+            📅 {task.date}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
 
-// Huvudappen
 function App() {
   const [tasks, setTasks] = useState(initialTasks);
-  const [activeId, setActiveId] = useState(null); // ID på kortet vi drar just nu
-  const [editingTask, setEditingTask] = useState(null); // Tasken vi redigerar just nu
+  const [activeId, setActiveId] = useState(null);
+  const [editingTask, setEditingTask] = useState(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }), // Kräv 5px rörelse för att starta drag (så man kan klicka)
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // Hantera Drag-Slut
   const handleDragEnd = (event) => {
     const { active, over } = event;
     setActiveId(null);
@@ -88,16 +92,12 @@ function App() {
 
     const activeId = active.id;
     const overId = over.id;
-
-    // Hitta vilken kolumn vi släppte i (om vi släppte på en container)
     const overContainer = over.data?.current?.sortable?.containerId || over.id;
     
-    // Om vi släppte direkt på en kolumn-ID (todo, progress, done)
     let newStatus = null;
     if (['todo', 'progress', 'done'].includes(overContainer)) {
       newStatus = overContainer;
     } else {
-      // Om vi släppte på ett annat kort, hitta dess status
       const overTask = tasks.find(t => t.id === overId);
       if (overTask) newStatus = overTask.status;
     }
@@ -105,7 +105,6 @@ function App() {
     if (newStatus) {
       setTasks((items) => {
         const oldIndex = items.findIndex((item) => item.id === activeId);
-        // Uppdatera status
         const newItems = [...items];
         newItems[oldIndex].status = newStatus;
         return newItems;
@@ -117,16 +116,31 @@ function App() {
     setActiveId(event.active.id);
   };
 
-  // Spara ändringar från modalen
   const saveTask = () => {
-    setTasks(tasks.map(t => t.id === editingTask.id ? editingTask : t));
+    if (editingTask.id === 'new') {
+        // Skapa ny task
+        const newTask = { ...editingTask, id: `t${Date.now()}` };
+        setTasks([...tasks, newTask]);
+    } else {
+        // Uppdatera befintlig
+        setTasks(tasks.map(t => t.id === editingTask.id ? editingTask : t));
+    }
     setEditingTask(null);
   };
 
-  // Ta bort task
   const deleteTask = () => {
     setTasks(tasks.filter(t => t.id !== editingTask.id));
     setEditingTask(null);
+  };
+
+  const addNewTask = () => {
+      setEditingTask({
+          id: 'new',
+          title: '',
+          projectId: 'p4', // Default till "Övrigt"
+          status: 'todo',
+          date: new Date().toISOString().split('T')[0] // Dagens datum
+      });
   };
 
   return (
@@ -145,35 +159,35 @@ function App() {
         <main className="board">
           {['todo', 'progress', 'done'].map(status => (
             <div key={status} className={`column ${status}`}>
-              <h2>{status === 'todo' ? 'ATT GÖRA 📝' : status === 'progress' ? 'PÅGÅENDE 🚧' : 'KLART ✅'}</h2>
+              <h2>{status === 'todo' ? 'ATT GÖRA' : status === 'progress' ? 'PÅGÅENDE' : 'KLART'}</h2>
               
               <SortableContext 
                 id={status} 
                 items={tasks.filter(t => t.status === status).map(t => t.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="card-list" id={status}> {/* ID behövs för DndContext att hitta kolumnen */}
+                <div className="card-list" id={status}>
                   {tasks.filter(t => t.status === status).map(task => (
                     <SortableItem 
                       key={task.id} 
                       task={task} 
                       project={initialProjects.find(p => p.id === task.projectId)}
-                      onClick={setEditingTask} // Öppna modal vid klick
+                      onClick={setEditingTask}
                     />
                   ))}
-                  {/* Droppable area hack: Osynlig div för att kunna släppa i tom kolumn */}
-                  {tasks.filter(t => t.status === status).length === 0 && (
-                     <div style={{height: '100px', border: '2px dashed #333', borderRadius: '8px', margin: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555'}}>
-                       Släpp här
-                     </div>
-                  )}
                 </div>
               </SortableContext>
+
+              {/* + Lägg till To-Do knapp (bara i första kolumnen) */}
+              {status === 'todo' && (
+                  <button className="btn-add-task" onClick={addNewTask}>
+                      <span>+</span> Lägg till To-Do
+                  </button>
+              )}
             </div>
           ))}
         </main>
 
-        {/* Drag Overlay (Kortet som följer musen) */}
         <DragOverlay>
           {activeId ? (
             <div className="card dragging">
@@ -187,13 +201,18 @@ function App() {
       {editingTask && (
         <div className="modal-overlay" onClick={() => setEditingTask(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h2>Redigera Uppgift</h2>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                <h2>{editingTask.id === 'new' ? 'Ny Uppgift' : 'Redigera Uppgift'}</h2>
+                <button className="btn-close" onClick={() => setEditingTask(null)}>✕</button>
+            </div>
             
             <label>Uppgift</label>
             <input 
               type="text" 
+              autoFocus
               value={editingTask.title} 
               onChange={e => setEditingTask({...editingTask, title: e.target.value})}
+              placeholder="Vad ska göras?"
             />
 
             <label>Projekt</label>
@@ -206,6 +225,13 @@ function App() {
               ))}
             </select>
 
+            <label>Deadline</label>
+            <input 
+                type="date"
+                value={editingTask.date || ''}
+                onChange={e => setEditingTask({...editingTask, date: e.target.value})}
+            />
+
             <label>Status</label>
             <select 
               value={editingTask.status} 
@@ -217,8 +243,11 @@ function App() {
             </select>
 
             <div className="modal-actions">
-              <button className="btn-delete" onClick={deleteTask}>Ta bort</button>
-              <button className="btn-save" onClick={saveTask}>Spara</button>
+              {editingTask.id !== 'new' && (
+                  <button className="btn-delete" onClick={deleteTask}>TA BORT</button>
+              )}
+              <div style={{flex:1}}></div>
+              <button className="btn-save" onClick={saveTask}>SPARA</button>
             </div>
           </div>
         </div>
