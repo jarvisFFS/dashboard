@@ -6,6 +6,7 @@
   --todo-border: #ffcf44;
   --progress-border: #3498db;
   --done-border: #2ecc71;
+  --modal-bg: #2c2c2c;
 }
 
 body {
@@ -31,28 +32,24 @@ header {
   border-bottom: 1px solid #333;
 }
 
-h1 {
-  margin: 0;
-  font-size: 1.2rem;
-  letter-spacing: 2px;
-  color: var(--accent-color);
-}
+h1 { margin: 0; font-size: 1.2rem; letter-spacing: 2px; color: var(--accent-color); }
 
 .board {
   display: flex;
   flex: 1;
-  overflow-x: auto; /* Scrolla i sidled på mobil */
+  overflow-x: auto;
   padding: 20px;
   gap: 20px;
 }
 
 .column {
-  min-width: 300px; /* Bredden på kolumnerna */
+  min-width: 300px;
   background-color: #181818;
   border-radius: 8px;
   padding: 10px;
   display: flex;
   flex-direction: column;
+  height: 100%; /* Fyll höjden */
 }
 
 .column h2 {
@@ -71,6 +68,7 @@ h1 {
   flex: 1;
   overflow-y: auto;
   padding-top: 10px;
+  min-height: 100px; /* För att kunna droppa i tom lista */
 }
 
 .card {
@@ -78,8 +76,9 @@ h1 {
   padding: 15px;
   margin-bottom: 10px;
   border-radius: 6px;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: grab; /* Hand-ikon */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  touch-action: none; /* Viktigt för touch-drag på mobil! */
   border-left: 4px solid transparent;
 }
 
@@ -87,20 +86,88 @@ h1 {
 .column.progress .card { border-left-color: var(--progress-border); }
 .column.done .card { border-left-color: var(--done-border); }
 
-.card:hover {
-  transform: translateY(-2px);
-  background-color: #252525;
+.card.dragging {
+  cursor: grabbing;
+  opacity: 0.8;
+  transform: scale(1.05);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+  border: 2px solid var(--accent-color);
+  z-index: 999;
 }
 
-.card h3 {
-  margin: 0 0 5px 0;
-  font-size: 1rem;
-}
+.card h3 { margin: 0 0 5px 0; font-size: 1rem; }
 
 .tag {
   font-size: 0.75rem;
-  background-color: #333;
   padding: 2px 6px;
   border-radius: 4px;
   color: #aaa;
+  display: inline-block;
+}
+
+/* MODAL STYLES */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.modal {
+  background-color: var(--modal-bg);
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  border: 1px solid #444;
+}
+
+.modal h2 { margin-top: 0; color: var(--accent-color); }
+
+.modal label {
+  display: block;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+.modal input, .modal select {
+  width: 100%;
+  padding: 10px;
+  background-color: #121212;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: white;
+  font-size: 1rem;
+}
+
+.modal-actions {
+  margin-top: 30px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.btn-save {
+  background-color: var(--accent-color);
+  color: black;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-delete {
+  background-color: transparent;
+  color: #ff5555;
+  border: 1px solid #ff5555;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
 }
