@@ -63,10 +63,10 @@ function SortableItem({ task, project, onClick }) {
     >
       <h3>{task.title}</h3>
       <div className="card-meta">
-        <span className="tag">{project?.title || 'No Project'}</span>
+        <span className="tag">{project?.title || 'Övrigt'}</span>
         {task.date && (
           <span className="date-badge">
-            📅 {task.date}
+            📅 {task.date.slice(5)} {/* Visa bara månad-dag */}
           </span>
         )}
       </div>
@@ -118,11 +118,9 @@ function App() {
 
   const saveTask = () => {
     if (editingTask.id === 'new') {
-        // Skapa ny task
         const newTask = { ...editingTask, id: `t${Date.now()}` };
         setTasks([...tasks, newTask]);
     } else {
-        // Uppdatera befintlig
         setTasks(tasks.map(t => t.id === editingTask.id ? editingTask : t));
     }
     setEditingTask(null);
@@ -133,20 +131,20 @@ function App() {
     setEditingTask(null);
   };
 
-  const addNewTask = () => {
+  const addNewTask = (status) => {
       setEditingTask({
           id: 'new',
           title: '',
-          projectId: 'p4', // Default till "Övrigt"
-          status: 'todo',
-          date: new Date().toISOString().split('T')[0] // Dagens datum
+          projectId: 'p4',
+          status: status, // Sätt status baserat på vilken kolumn vi klickade i
+          date: new Date().toISOString().split('T')[0]
       });
   };
 
   return (
     <div className="dashboard">
       <header>
-        <h1>JARVIS COMMAND CENTER</h1>
+        <h1>JARVIS BOARD</h1>
         <div className="user">OSCAR</div>
       </header>
 
@@ -159,7 +157,7 @@ function App() {
         <main className="board">
           {['todo', 'progress', 'done'].map(status => (
             <div key={status} className={`column ${status}`}>
-              <h2>{status === 'todo' ? 'ATT GÖRA' : status === 'progress' ? 'PÅGÅENDE' : 'KLART'}</h2>
+              <h2>{status === 'todo' ? 'To Do' : status === 'progress' ? 'This week' : 'Done'}</h2>
               
               <SortableContext 
                 id={status} 
@@ -178,12 +176,10 @@ function App() {
                 </div>
               </SortableContext>
 
-              {/* + Lägg till To-Do knapp (bara i första kolumnen) */}
-              {status === 'todo' && (
-                  <button className="btn-add-task" onClick={addNewTask}>
-                      <span>+</span> Lägg till To-Do
-                  </button>
-              )}
+              {/* + Add a card i VARJE kolumn */}
+              <button className="btn-add-task" onClick={() => addNewTask(status)}>
+                  <span>+</span> Add a card
+              </button>
             </div>
           ))}
         </main>
@@ -202,20 +198,20 @@ function App() {
         <div className="modal-overlay" onClick={() => setEditingTask(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                <h2>{editingTask.id === 'new' ? 'Ny Uppgift' : 'Redigera Uppgift'}</h2>
+                <h2>{editingTask.id === 'new' ? 'New Task' : 'Edit Task'}</h2>
                 <button className="btn-close" onClick={() => setEditingTask(null)}>✕</button>
             </div>
             
-            <label>Uppgift</label>
+            <label>Title</label>
             <input 
               type="text" 
               autoFocus
               value={editingTask.title} 
               onChange={e => setEditingTask({...editingTask, title: e.target.value})}
-              placeholder="Vad ska göras?"
+              placeholder="What needs to be done?"
             />
 
-            <label>Projekt</label>
+            <label>Project</label>
             <select 
               value={editingTask.projectId} 
               onChange={e => setEditingTask({...editingTask, projectId: e.target.value})}
@@ -225,29 +221,19 @@ function App() {
               ))}
             </select>
 
-            <label>Deadline</label>
+            <label>Due Date</label>
             <input 
                 type="date"
                 value={editingTask.date || ''}
                 onChange={e => setEditingTask({...editingTask, date: e.target.value})}
             />
 
-            <label>Status</label>
-            <select 
-              value={editingTask.status} 
-              onChange={e => setEditingTask({...editingTask, status: e.target.value})}
-            >
-              <option value="todo">Att göra</option>
-              <option value="progress">Pågående</option>
-              <option value="done">Klart</option>
-            </select>
-
             <div className="modal-actions">
               {editingTask.id !== 'new' && (
-                  <button className="btn-delete" onClick={deleteTask}>TA BORT</button>
+                  <button className="btn-delete" onClick={deleteTask}>Delete</button>
               )}
               <div style={{flex:1}}></div>
-              <button className="btn-save" onClick={saveTask}>SPARA</button>
+              <button className="btn-save" onClick={saveTask}>Save</button>
             </div>
           </div>
         </div>
