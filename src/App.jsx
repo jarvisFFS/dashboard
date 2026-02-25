@@ -90,7 +90,7 @@ function SortableItem({ task, project, onClick }) {
         </div>
       )}
       <div className="card-meta">
-        <div style={{display:'flex', gap:'5px', alignItems:'center'}}>
+        <div style={{display:'flex', gap:'5px', alignItems:'center', flexWrap:'wrap'}}>
             <span className="tag" style={{backgroundColor: tagColor}}>{project?.title || 'Övrigt'}</span>
             {assigneeInfo && <span title={assigneeInfo.name} style={{fontSize: '1rem'}}>{assigneeInfo.emoji}</span>}
         </div>
