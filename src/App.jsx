@@ -19,7 +19,14 @@ import { CSS } from '@dnd-kit/utilities';
 import { supabase } from './supabaseClient';
 import './index.css';
 
-// --- KOMPONENTER ---
+// --- CONSTANTS ---
+const assignees = [
+  { id: 'oscar', name: 'Oscar', emoji: '👑' },
+  { id: 'jarvis', name: 'Jarvis', emoji: '🤖' },
+  { id: 'malin', name: 'Malin', emoji: '👩' }
+];
+
+// --- COMPONENTS ---
 
 function DroppableColumn({ id, title, children, onAddTask }) {
   const { setNodeRef } = useDroppable({ id });
@@ -56,7 +63,7 @@ function SortableItem({ task, project, onClick }) {
   const totalSub = task.subtasks?.length || 0;
   const doneSub = task.subtasks?.filter(s => s.done).length || 0;
 
-  // Generera en färg baserat på projekt-ID
+  // Generate a color based on project ID
   const getProjectColor = (pid) => {
       if (!pid) return '#ccc';
       if (pid === 'p1') return '#ffb7b2';
@@ -178,7 +185,7 @@ function App() {
         status: task.status,
         date: task.date,
         subtasks: task.subtasks,
-        assignee: task.assignee // Lägg till assignee
+        assignee: task.assignee
     };
 
     const { error } = await supabase.from('tasks').upsert(taskToSave);
@@ -249,7 +256,7 @@ function App() {
           status: status,
           date: new Date().toISOString().split('T')[0],
           subtasks: [],
-          assignee: 'oscar' // Default assignee
+          assignee: 'oscar'
       });
   };
 
@@ -271,7 +278,7 @@ function App() {
       : tasks.filter(t => (t.project_id || t.projectId) === filterProjectId);
 
   if (loading && tasks.length === 0) {
-      return <div className="dashboard" style={{justifyContent:'center', alignItems:'center'}}><h1>Laddar...</h1></div>
+      return <div className="dashboard" style={{justifyContent:'center', alignItems:'center'}}><h1>Laddar Dashboard...</h1></div>
   }
 
   return (
