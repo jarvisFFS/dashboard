@@ -30,9 +30,8 @@
               t.id === activeId ? { ...t, status: newStatus } : t
           ));
 
-          // 2. Skicka till DB och hämta om allt för att vara säker
-          await updateTaskStatus(activeId, newStatus);
-          fetchTasks(); 
+          // 2. Skicka till DB (men ladda INTE om listan, det stör UI:t)
+          updateTaskStatus(activeId, newStatus);
       }
     }
   };
