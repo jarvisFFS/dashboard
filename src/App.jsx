@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   DndContext, 
   closestCenter,
@@ -9,13 +9,13 @@ import {
   DragOverlay
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { supabase } from './supabaseClient'; // Din nya databas-koppling!
 import './index.css';
 
 // --- DATA ---
@@ -24,21 +24,6 @@ const initialProjects = [
   { id: 'p2', title: 'InspoHub' },
   { id: 'p3', title: 'Trading Script' },
   { id: 'p4', title: 'Övrigt' }
-];
-
-const initialTasks = [
-  { 
-    id: 't1', 
-    projectId: 'p1', 
-    title: 'Sätta upp React-projekt', 
-    status: 'done', 
-    date: '2026-02-24',
-    subtasks: [{ id: 's1', text: 'Installera Vite', done: true }, { id: 's2', text: 'Konfa CSS', done: true }]
-  },
-  { id: 't2', projectId: 'p1', title: 'Skapa Kanban-vy', status: 'progress', date: '2026-02-25', subtasks: [] },
-  { id: 't3', projectId: 'p2', title: 'Fixa "Explore"-sidan', status: 'done', date: '2026-02-23', subtasks: [] },
-  { id: 't4', projectId: 'p2', title: 'Länka till produkter', status: 'todo', date: '', subtasks: [] },
-  { id: 't5', projectId: 'p3', title: 'Bestämma strategi', status: 'todo', date: '2026-02-28', subtasks: [] },
 ];
 
 // --- KOMPONENTER ---
@@ -59,7 +44,6 @@ function SortableItem({ task, project, onClick }) {
     opacity: isDragging ? 0.0 : 1,
   };
 
-  // Beräkna progress (antal klara / totalt)
   const totalSub = task.subtasks?.length || 0;
   const doneSub = task.subtasks?.filter(s => s.done).length || 0;
 
@@ -69,18 +53,15 @@ function SortableItem({ task, project, onClick }) {
       style={style} 
       {...attributes} 
       {...listeners} 
-      className={`card proj-${task.projectId}`} // Klass för färg
+      className={`card proj-${task.projectId}`}
       onClick={() => onClick(task)}
     >
       <h3>{task.title}</h3>
-      
-      {/* Visa progress om subtasks finns */}
       {totalSub > 0 && (
         <div className="subtask-progress">
           ☑ {doneSub}/{totalSub}
         </div>
       )}
-
       <div className="card-meta">
         <span className={`tag proj-${task.projectId}`}>{project?.title || 'Övrigt'}</span>
         {task.date && (
@@ -94,14 +75,87 @@ function SortableItem({ task, project, onClick }) {
 }
 
 function App() {
-  const [tasks, setTasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState([]); // Börjar tomt, hämtar från DB
   const [activeId, setActiveId] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  // --- SUPABASE LOGIK ---
+
+  // 1. Hämta tasks vid start
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const fetchTasks = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*')
+      .order('created_at', { ascending: true }); // Sortera på skapad
+
+    if (error) console.error('Error fetching tasks:', error);
+    else setTasks(data || []);
+    setLoading(false);
+  };
+
+  // 2. Uppdatera status (Drag & Drop)
+  const updateTaskStatus = async (id, newStatus) => {
+    const { error } = await supabase
+      .from('tasks')
+      .update({ status: newStatus })
+      .eq('id', id);
+    
+    if (error) console.error('Error moving task:', error);
+  };
+
+  // 3. Spara (Ny eller Uppdaterad)
+  const saveTaskToDb = async (task) => {
+    // Om det är en "new" (id='new'), ta bort id så Supabase genererar ett (eller vi gör ett)
+    // I din SQL satte vi id som text primary key, så vi genererar ett här.
+    
+    const taskToSave = {
+        id: task.id === 'new' ? crypto.randomUUID() : task.id,
+        title: task.title,
+        project_id: task.projectId, // Mappar projectId -> project_id i DB
+        status: task.status,
+        date: task.date,
+        subtasks: task.subtasks
+    };
+
+    const { error } = await supabase
+      .from('tasks')
+      .upsert(taskToSave); // Upsert = Insert or Update
+
+    if (error) {
+        console.error('Error saving task:', error);
+        alert('Kunde inte spara! Kolla konsolen.');
+    } else {
+        fetchTasks(); // Hämta lista igen för att vara säker
+        setEditingTask(null);
+    }
+  };
+
+  // 4. Ta bort
+  const deleteTaskFromDb = async (id) => {
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', id);
+
+    if (error) console.error('Error deleting:', error);
+    else {
+        setTasks(tasks.filter(t => t.id !== id));
+        setEditingTask(null);
+    }
+  };
+
+  // --- UI HANDLERS ---
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
@@ -122,10 +176,14 @@ function App() {
     }
 
     if (newStatus) {
+      // Optimistisk UI-uppdatering (uppdatera direkt, sen databas)
       setTasks((items) => {
         const oldIndex = items.findIndex((item) => item.id === activeId);
         const newItems = [...items];
-        newItems[oldIndex].status = newStatus;
+        if (newItems[oldIndex].status !== newStatus) {
+            newItems[oldIndex].status = newStatus;
+            updateTaskStatus(activeId, newStatus); // Skicka till DB
+        }
         return newItems;
       });
     }
@@ -133,21 +191,6 @@ function App() {
 
   const handleDragStart = (event) => {
     setActiveId(event.active.id);
-  };
-
-  const saveTask = () => {
-    if (editingTask.id === 'new') {
-        const newTask = { ...editingTask, id: `t${Date.now()}` };
-        setTasks([...tasks, newTask]);
-    } else {
-        setTasks(tasks.map(t => t.id === editingTask.id ? editingTask : t));
-    }
-    setEditingTask(null);
-  };
-
-  const deleteTask = () => {
-    setTasks(tasks.filter(t => t.id !== editingTask.id));
-    setEditingTask(null);
   };
 
   const addNewTask = (status) => {
@@ -161,7 +204,7 @@ function App() {
       });
   };
 
-  // --- Subtask funktioner ---
+  // --- Subtask Helpers ---
   const addSubtask = () => {
     const newSub = { id: `s${Date.now()}`, text: '', done: false };
     setEditingTask({ ...editingTask, subtasks: [...(editingTask.subtasks || []), newSub] });
@@ -176,6 +219,10 @@ function App() {
     const updated = editingTask.subtasks.filter(s => s.id !== id);
     setEditingTask({ ...editingTask, subtasks: updated });
   };
+
+  if (loading && tasks.length === 0) {
+      return <div className="dashboard" style={{justifyContent:'center', alignItems:'center'}}><h1>Laddar Jarvis DB...</h1></div>
+  }
 
   return (
     <div className="dashboard">
@@ -205,7 +252,7 @@ function App() {
                     <SortableItem 
                       key={task.id} 
                       task={task} 
-                      project={initialProjects.find(p => p.id === task.projectId)}
+                      project={initialProjects.find(p => p.id === (task.projectId || task.project_id))} // Hantera både camelCase och snake_case från DB
                       onClick={setEditingTask}
                     />
                   ))}
@@ -248,7 +295,7 @@ function App() {
 
             <label>Project</label>
             <select 
-              value={editingTask.projectId} 
+              value={editingTask.projectId || editingTask.project_id} 
               onChange={e => setEditingTask({...editingTask, projectId: e.target.value})}
             >
               {initialProjects.map(p => (
@@ -286,10 +333,10 @@ function App() {
 
             <div className="modal-actions">
               {editingTask.id !== 'new' && (
-                  <button className="btn-delete" onClick={deleteTask}>Delete</button>
+                  <button className="btn-delete" onClick={() => deleteTaskFromDb(editingTask.id)}>Delete</button>
               )}
               <div style={{flex:1}}></div>
-              <button className="btn-save" onClick={saveTask}>Save</button>
+              <button className="btn-save" onClick={() => saveTaskToDb(editingTask)}>Save</button>
             </div>
           </div>
         </div>
