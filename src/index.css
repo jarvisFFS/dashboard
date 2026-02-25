@@ -6,9 +6,13 @@
   --card-bg: #2b2b2b;
   --text-color: #e0e0e0;
   --accent-color: #bb86fc;
+  
+  /* Column Border Colors */
   --todo-border: #ffcf44;
   --progress-border: #3498db;
   --done-border: #2ecc71;
+  --archive-border: #7f8c8d; /* Grå för arkiv */
+  
   --modal-bg: #1e1e1e;
   
   --font-headers: 'Oswald', sans-serif;
@@ -38,6 +42,13 @@ header {
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid rgba(255,255,255,0.1);
+  gap: 20px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 h1 {
@@ -47,12 +58,30 @@ h1 {
   color: #fff;
   text-transform: uppercase;
   letter-spacing: 1px;
+  white-space: nowrap;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 15px;
+/* FILTER DROPDOWN */
+.project-filter {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.project-filter:hover, .project-filter:focus {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--accent-color);
+}
+
+.project-filter option {
+  background-color: #1e1e1e;
+  color: #fff;
 }
 
 .user {
@@ -60,22 +89,6 @@ h1 {
   color: #fff;
   opacity: 0.7;
   font-size: 0.9rem;
-}
-
-.btn-projects {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  transition: all 0.2s;
-}
-
-.btn-projects:hover {
-  background: rgba(255, 255, 255, 0.2);
 }
 
 .board {
@@ -87,6 +100,7 @@ h1 {
   align-items: flex-start;
 }
 
+/* Kolumner */
 .column {
   min-width: 280px;
   max-width: 320px;
@@ -114,6 +128,7 @@ h1 {
 .column.todo h2 { border-color: var(--todo-border); }
 .column.progress h2 { border-color: var(--progress-border); }
 .column.done h2 { border-color: var(--done-border); }
+.column.archive h2 { border-color: var(--archive-border); color: #aaa; }
 
 .card-list {
   flex: 1;
@@ -122,6 +137,7 @@ h1 {
   min-height: 50px;
 }
 
+/* Kort */
 .card {
   background-color: var(--card-bg);
   padding: 12px;
@@ -164,15 +180,23 @@ h1 {
   margin-top: 10px;
 }
 
+/* Pastell Taggar & Fallback */
 .tag {
   font-size: 0.7rem;
   padding: 2px 8px;
   border-radius: 4px;
+  background-color: #ccc; /* Default */
   color: #000;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
+/* Vi genererar färger dynamiskt i JS nu, men behåller några defaults */
+.tag.proj-p1 { background-color: #ffb7b2; }
+.tag.proj-p2 { background-color: #b5ead7; }
+.tag.proj-p3 { background-color: #c7ceea; }
+.tag.proj-p4 { background-color: #e2f0cb; }
 
 .date-badge {
   font-size: 0.75rem;
@@ -298,40 +322,26 @@ h1 {
   cursor: pointer;
 }
 
-/* Project List in Modal */
-.project-list {
-  max-height: 200px;
-  overflow-y: auto;
-  margin-bottom: 15px;
-}
-
-.project-item {
+.checklist-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 8px;
-  border-bottom: 1px solid #333;
-}
-
-.project-item button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #666;
-}
-.project-item button:hover { color: #ff5555; }
-
-.add-project-form {
-  display: flex;
   gap: 10px;
+  margin-bottom: 8px;
 }
 
-.add-project-form button {
-  white-space: nowrap;
-  background-color: #333;
-  color: white;
-  border: 1px solid #555;
+.checklist-item input[type="text"] {
+  padding: 6px;
+  border: none;
+  border-bottom: 1px solid #444;
+}
+
+.btn-add-subtask {
+  background: transparent;
+  border: 1px dashed #555;
+  color: #aaa;
+  padding: 6px 12px;
   border-radius: 4px;
+  font-size: 0.8rem;
   cursor: pointer;
-  padding: 0 15px;
+  margin-top: 5px;
 }
