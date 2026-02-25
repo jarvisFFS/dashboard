@@ -71,6 +71,7 @@ function SortableItem({ task, project, onClick }) {
   };
 
   const tagColor = getProjectColor(task.project_id || task.projectId);
+  const assigneeInfo = assignees.find(a => a.id === task.assignee);
 
   return (
     <div 
@@ -89,7 +90,10 @@ function SortableItem({ task, project, onClick }) {
         </div>
       )}
       <div className="card-meta">
-        <span className="tag" style={{backgroundColor: tagColor}}>{project?.title || 'Övrigt'}</span>
+        <div style={{display:'flex', gap:'5px', alignItems:'center'}}>
+            <span className="tag" style={{backgroundColor: tagColor}}>{project?.title || 'Övrigt'}</span>
+            {assigneeInfo && <span title={assigneeInfo.name} style={{fontSize: '1rem'}}>{assigneeInfo.emoji}</span>}
+        </div>
         {task.date && (
           <span className="date-badge">
             📅 {task.date.slice(5)}
@@ -173,7 +177,8 @@ function App() {
         project_id: task.projectId || task.project_id,
         status: task.status,
         date: task.date,
-        subtasks: task.subtasks
+        subtasks: task.subtasks,
+        assignee: task.assignee // Lägg till assignee
     };
 
     const { error } = await supabase.from('tasks').upsert(taskToSave);
@@ -243,7 +248,8 @@ function App() {
           projectId: projects[0]?.id || 'p4',
           status: status,
           date: new Date().toISOString().split('T')[0],
-          subtasks: []
+          subtasks: [],
+          assignee: 'oscar' // Default assignee
       });
   };
 
@@ -361,6 +367,17 @@ function App() {
             >
               {projects.map(p => (
                 <option key={p.id} value={p.id}>{p.title}</option>
+              ))}
+            </select>
+
+            <label>Assignee</label>
+            <select 
+              value={editingTask.assignee || ''} 
+              onChange={e => setEditingTask({...editingTask, assignee: e.target.value})}
+            >
+              <option value="">Unassigned</option>
+              {assignees.map(a => (
+                <option key={a.id} value={a.id}>{a.emoji} {a.name}</option>
               ))}
             </select>
 
