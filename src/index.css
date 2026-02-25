@@ -7,11 +7,10 @@
   --text-color: #e0e0e0;
   --accent-color: #bb86fc;
   
-  /* Column Border Colors */
   --todo-border: #ffcf44;
   --progress-border: #3498db;
   --done-border: #2ecc71;
-  --archive-border: #7f8c8d; /* Grå för arkiv */
+  --archive-border: #7f8c8d;
   
   --modal-bg: #1e1e1e;
   
@@ -42,13 +41,14 @@ header {
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid rgba(255,255,255,0.1);
-  gap: 20px;
+  gap: 10px;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 15px;
+  flex-wrap: wrap; /* Bra för mobil */
 }
 
 h1 {
@@ -74,15 +74,24 @@ h1 {
   outline: none;
 }
 
-.project-filter:hover, .project-filter:focus {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: var(--accent-color);
+/* --- HÄR ÄR DEN SAKNADE KNAPP-STILEN --- */
+.btn-projects {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  white-space: nowrap;
 }
 
-.project-filter option {
-  background-color: #1e1e1e;
-  color: #fff;
+.btn-projects:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
+/* --------------------------------------- */
 
 .user {
   font-family: var(--font-headers);
@@ -100,7 +109,6 @@ h1 {
   align-items: flex-start;
 }
 
-/* Kolumner */
 .column {
   min-width: 280px;
   max-width: 320px;
@@ -137,7 +145,6 @@ h1 {
   min-height: 50px;
 }
 
-/* Kort */
 .card {
   background-color: var(--card-bg);
   padding: 12px;
@@ -180,23 +187,16 @@ h1 {
   margin-top: 10px;
 }
 
-/* Pastell Taggar & Fallback */
 .tag {
   font-size: 0.7rem;
   padding: 2px 8px;
   border-radius: 4px;
-  background-color: #ccc; /* Default */
+  background-color: #ccc;
   color: #000;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-
-/* Vi genererar färger dynamiskt i JS nu, men behåller några defaults */
-.tag.proj-p1 { background-color: #ffb7b2; }
-.tag.proj-p2 { background-color: #b5ead7; }
-.tag.proj-p3 { background-color: #c7ceea; }
-.tag.proj-p4 { background-color: #e2f0cb; }
 
 .date-badge {
   font-size: 0.75rem;
@@ -322,6 +322,7 @@ h1 {
   cursor: pointer;
 }
 
+/* CHECKLIST STYLES */
 .checklist-item {
   display: flex;
   align-items: center;
@@ -344,4 +345,46 @@ h1 {
   font-size: 0.8rem;
   cursor: pointer;
   margin-top: 5px;
+}
+
+/* PROJECT MODAL LIST */
+.project-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 5px;
+}
+
+.project-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid #333;
+}
+.project-item:last-child { border-bottom: none; }
+
+.project-item button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+}
+.project-item button:hover { color: #ff5555; }
+
+.add-project-form {
+  display: flex;
+  gap: 10px;
+}
+
+.add-project-form button {
+  white-space: nowrap;
+  background-color: #333;
+  color: white;
+  border: 1px solid #555;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0 15px;
 }
