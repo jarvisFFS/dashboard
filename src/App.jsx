@@ -272,25 +272,24 @@ function App() {
   return (
     <div className="dashboard">
       <header>
-        <div className="header-left">
-            <h1>JARVIS BOARD</h1>
-            
+        <h1>JARVIS BOARD</h1>
+        
+        <div className="header-actions">
             <select 
                 className="project-filter"
                 value={filterProjectId}
                 onChange={(e) => setFilterProjectId(e.target.value)}
             >
-                <option value="all">Show All Projects</option>
+                <option value="all">All Projects</option>
                 {projects.map(p => (
                     <option key={p.id} value={p.id}>{p.title}</option>
                 ))}
             </select>
 
-            <button className="btn-projects" onClick={() => setShowProjectModal(true)}>
-                ⚙️ Projects
+            <button className="btn-projects" onClick={() => setShowProjectModal(true)} title="Manage Projects">
+                ⚙️
             </button>
         </div>
-        <div className="user">OSCAR</div>
       </header>
 
       <DndContext 

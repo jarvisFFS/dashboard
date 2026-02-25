@@ -61,37 +61,33 @@ h1 {
   white-space: nowrap;
 }
 
-/* FILTER DROPDOWN */
-.project-filter {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  cursor: pointer;
-  outline: none;
+/* FILTER & PROJECTS BUTTON CONTAINER */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* --- HÄR ÄR DEN SAKNADE KNAPP-STILEN --- */
 .btn-projects {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #fff;
-  padding: 6px 12px;
+  width: 36px; /* Kvadratisk knapp */
+  height: 36px;
   border-radius: 6px;
   cursor: pointer;
-  font-family: var(--font-body);
-  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
   transition: all 0.2s;
-  white-space: nowrap;
 }
 
 .btn-projects:hover {
   background: rgba(255, 255, 255, 0.2);
+  border-color: var(--accent-color);
 }
-/* --------------------------------------- */
+
 
 .user {
   font-family: var(--font-headers);
