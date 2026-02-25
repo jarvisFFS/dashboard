@@ -6,7 +6,8 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragOverlay
+  DragOverlay,
+  useDroppable // Importera useDroppable
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -15,7 +16,7 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { supabase } from './supabaseClient'; // Din nya databas-koppling!
+import { supabase } from './supabaseClient';
 import './index.css';
 
 // --- DATA ---
@@ -27,6 +28,21 @@ const initialProjects = [
 ];
 
 // --- KOMPONENTER ---
+
+// En wrapper för kolumnen för att göra den "Droppable"
+function DroppableColumn({ id, title, children, onAddTask }) {
+  const { setNodeRef } = useDroppable({ id }); // id är 'todo', 'progress', 'done'
+
+  return (
+    <div ref={setNodeRef} className={`column ${id}`}>
+      <h2>{title}</h2>
+      {children}
+      <button className="btn-add-task" onClick={onAddTask}>
+          <span>+</span> Add Task
+      </button>
+    </div>
+  );
+}
 
 function SortableItem({ task, project, onClick }) {
   const {
@@ -75,7 +91,7 @@ function SortableItem({ task, project, onClick }) {
 }
 
 function App() {
-  const [tasks, setTasks] = useState([]); // Börjar tomt, hämtar från DB
+  const [tasks, setTasks] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -86,8 +102,6 @@ function App() {
   );
 
   // --- SUPABASE LOGIK ---
-
-  // 1. Hämta tasks vid start
   useEffect(() => {
     fetchTasks();
   }, []);
@@ -97,14 +111,13 @@ function App() {
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
-      .order('created_at', { ascending: true }); // Sortera på skapad
+      .order('created_at', { ascending: true });
 
     if (error) console.error('Error fetching tasks:', error);
     else setTasks(data || []);
     setLoading(false);
   };
 
-  // 2. Uppdatera status (Drag & Drop)
   const updateTaskStatus = async (id, newStatus) => {
     const { error } = await supabase
       .from('tasks')
@@ -114,15 +127,11 @@ function App() {
     if (error) console.error('Error moving task:', error);
   };
 
-  // 3. Spara (Ny eller Uppdaterad)
   const saveTaskToDb = async (task) => {
-    // Om det är en "new" (id='new'), ta bort id så Supabase genererar ett (eller vi gör ett)
-    // I din SQL satte vi id som text primary key, så vi genererar ett här.
-    
     const taskToSave = {
         id: task.id === 'new' ? crypto.randomUUID() : task.id,
         title: task.title,
-        project_id: task.projectId, // Mappar projectId -> project_id i DB
+        project_id: task.projectId || task.project_id, // Hantera båda
         status: task.status,
         date: task.date,
         subtasks: task.subtasks
@@ -130,18 +139,17 @@ function App() {
 
     const { error } = await supabase
       .from('tasks')
-      .upsert(taskToSave); // Upsert = Insert or Update
+      .upsert(taskToSave);
 
     if (error) {
         console.error('Error saving task:', error);
         alert('Kunde inte spara! Kolla konsolen.');
     } else {
-        fetchTasks(); // Hämta lista igen för att vara säker
+        fetchTasks();
         setEditingTask(null);
     }
   };
 
-  // 4. Ta bort
   const deleteTaskFromDb = async (id) => {
     const { error } = await supabase
       .from('tasks')
@@ -165,26 +173,40 @@ function App() {
 
     const activeId = active.id;
     const overId = over.id;
-    const overContainer = over.data?.current?.sortable?.containerId || over.id;
     
+    // Check if dropped on a container (column) OR another item
+    // dnd-kit kan returnera containerId via data.current.sortable.containerId
+    // ELLER så är over.id själva container-id:t om vi använder useDroppable på kolumnen
     let newStatus = null;
-    if (['todo', 'progress', 'done'].includes(overContainer)) {
-      newStatus = overContainer;
+
+    if (['todo', 'progress', 'done'].includes(overId)) {
+        // Dropped directly on the column background
+        newStatus = overId;
     } else {
-      const overTask = tasks.find(t => t.id === overId);
-      if (overTask) newStatus = overTask.status;
+        // Dropped on another item -> get that item's status
+        const overTask = tasks.find(t => t.id === overId);
+        if (overTask) newStatus = overTask.status;
+    }
+
+    // Om vi inte hittade status via overId, försök via sortable-data
+    if (!newStatus && over.data?.current?.sortable?.containerId) {
+        newStatus = over.data.current.sortable.containerId;
     }
 
     if (newStatus) {
-      // Optimistisk UI-uppdatering (uppdatera direkt, sen databas)
       setTasks((items) => {
         const oldIndex = items.findIndex((item) => item.id === activeId);
         const newItems = [...items];
-        if (newItems[oldIndex].status !== newStatus) {
-            newItems[oldIndex].status = newStatus;
-            updateTaskStatus(activeId, newStatus); // Skicka till DB
+        
+        // Optimistisk uppdatering: Flytta kortet direkt i UI
+        if (newItems[oldIndex]) {
+            if (newItems[oldIndex].status !== newStatus) {
+                newItems[oldIndex].status = newStatus;
+                updateTaskStatus(activeId, newStatus); // Skicka till DB
+            }
+            return arrayMove(newItems, oldIndex, items.findIndex(i => i.id === overId)); // Sortera om om vi droppade på ett item
         }
-        return newItems;
+        return items;
       });
     }
   };
@@ -239,30 +261,29 @@ function App() {
       >
         <main className="board">
           {['todo', 'progress', 'done'].map(status => (
-            <div key={status} className={`column ${status}`}>
-              <h2>{status === 'todo' ? 'To Do' : status === 'progress' ? 'In Progress' : 'Done'}</h2>
-              
+            <DroppableColumn 
+                key={status} 
+                id={status} 
+                title={status === 'todo' ? 'To Do' : status === 'progress' ? 'In Progress' : 'Done'}
+                onAddTask={() => addNewTask(status)}
+            >
               <SortableContext 
                 id={status} 
                 items={tasks.filter(t => t.status === status).map(t => t.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="card-list" id={status}>
+                <div className="card-list">
                   {tasks.filter(t => t.status === status).map(task => (
                     <SortableItem 
                       key={task.id} 
                       task={task} 
-                      project={initialProjects.find(p => p.id === (task.projectId || task.project_id))} // Hantera både camelCase och snake_case från DB
+                      project={initialProjects.find(p => p.id === (task.projectId || task.project_id))}
                       onClick={setEditingTask}
                     />
                   ))}
                 </div>
               </SortableContext>
-
-              <button className="btn-add-task" onClick={() => addNewTask(status)}>
-                  <span>+</span> Add Task
-              </button>
-            </div>
+            </DroppableColumn>
           ))}
         </main>
 
