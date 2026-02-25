@@ -272,7 +272,7 @@ function App() {
     <div className="dashboard">
       <header>
         <div className="header-left">
-            <h1>JARVIS BOARD</h1>
+            <h1>JARVIS KANBAN BOARD</h1>
             
             <select 
                 className="project-filter"
