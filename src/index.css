@@ -1,26 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;500;600&display=swap');
 
 :root {
-  /* Midnight Cyber Background */
   --bg-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-  
-  /* Column & Card Colors */
-  --column-bg: rgba(0, 0, 0, 0.3); /* Mörkare genomskinlig */
-  --card-bg: #2b2b2b; /* Mörkgrå kort */
+  --column-bg: rgba(0, 0, 0, 0.3);
+  --card-bg: #2b2b2b;
   --text-color: #e0e0e0;
-  
-  /* Accents */
   --accent-color: #bb86fc;
   --todo-border: #ffcf44;
   --progress-border: #3498db;
   --done-border: #2ecc71;
+  --modal-bg: #1e1e1e;
   
-  /* Pastel Project Colors (CSS Variables) */
-  --proj-p1: #ffb7b2; /* Project Manager (Pastell Röd) */
-  --proj-p2: #b5ead7; /* InspoHub (Pastell Grön) */
-  --proj-p3: #c7ceea; /* Trading Script (Pastell Blå) */
-  --proj-p4: #e2f0cb; /* Övrigt (Pastell Gul) */
-
   --font-headers: 'Oswald', sans-serif;
   --font-body: 'Inter', sans-serif;
 }
@@ -59,11 +49,33 @@ h1 {
   letter-spacing: 1px;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
 .user {
   font-family: var(--font-headers);
   color: #fff;
   opacity: 0.7;
   font-size: 0.9rem;
+}
+
+.btn-projects {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.btn-projects:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .board {
@@ -75,7 +87,6 @@ h1 {
   align-items: flex-start;
 }
 
-/* Kolumner */
 .column {
   min-width: 280px;
   max-width: 320px;
@@ -97,11 +108,12 @@ h1 {
   font-weight: 500;
   display: flex;
   justify-content: space-between;
+  border-bottom: 2px solid transparent;
 }
 
-.column.todo h2 { border-bottom: 2px solid var(--todo-border); }
-.column.progress h2 { border-bottom: 2px solid var(--progress-border); }
-.column.done h2 { border-bottom: 2px solid var(--done-border); }
+.column.todo h2 { border-color: var(--todo-border); }
+.column.progress h2 { border-color: var(--progress-border); }
+.column.done h2 { border-color: var(--done-border); }
 
 .card-list {
   flex: 1;
@@ -110,7 +122,6 @@ h1 {
   min-height: 50px;
 }
 
-/* Kort */
 .card {
   background-color: var(--card-bg);
   padding: 12px;
@@ -122,27 +133,12 @@ h1 {
   touch-action: none;
   position: relative;
   overflow: hidden;
+  transition: transform 0.2s;
 }
-
-/* Project Color Stripe (Left) */
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0; bottom: 0; left: 0;
-  width: 4px;
-  background-color: #888; /* Default fallback */
-}
-
-/* Dynamiska klasser för projektfärger */
-.card.proj-p1::before { background-color: var(--proj-p1); }
-.card.proj-p2::before { background-color: var(--proj-p2); }
-.card.proj-p3::before { background-color: var(--proj-p3); }
-.card.proj-p4::before { background-color: var(--proj-p4); }
 
 .card:hover {
   background-color: #383838;
   transform: translateY(-2px);
-  transition: all 0.2s;
 }
 
 .card.dragging {
@@ -168,39 +164,27 @@ h1 {
   margin-top: 10px;
 }
 
-/* Pastell Taggar */
 .tag {
   font-size: 0.7rem;
   padding: 2px 8px;
   border-radius: 4px;
-  background-color: #ccc; /* Default fallback färg (Ljusgrå) */
   color: #000;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.tag.proj-p1 { background-color: var(--proj-p1); }
-.tag.proj-p2 { background-color: var(--proj-p2); }
-.tag.proj-p3 { background-color: var(--proj-p3); }
-.tag.proj-p4 { background-color: var(--proj-p4); }
-
 .date-badge {
   font-size: 0.75rem;
   color: #aaa;
 }
 
-/* Subtasks Progress Bar (Mini) på kortet */
 .subtask-progress {
   margin-top: 8px;
   font-size: 0.75rem;
   color: #888;
-  display: flex;
-  align-items: center;
-  gap: 5px;
 }
 
-/* ADD BUTTON (+ Add a card) */
 .btn-add-task {
   margin-top: 4px;
   background: rgba(255,255,255,0.05);
@@ -211,7 +195,6 @@ h1 {
   cursor: pointer;
   text-align: left;
   font-family: var(--font-body);
-  transition: all 0.2s;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -223,7 +206,7 @@ h1 {
   color: #fff;
 }
 
-/* MODAL (Dark Mode) */
+/* MODAL */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -236,7 +219,7 @@ h1 {
 }
 
 .modal {
-  background-color: #1e1e1e;
+  background-color: var(--modal-bg);
   padding: 24px;
   border-radius: 12px;
   width: 90%;
@@ -252,6 +235,8 @@ h1 {
   font-family: var(--font-headers);
   font-size: 1.2rem;
   margin-bottom: 20px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 10px;
 }
 
 .modal label {
@@ -274,55 +259,6 @@ h1 {
   font-family: var(--font-body);
   font-size: 0.95rem;
   box-sizing: border-box;
-}
-
-.modal input:focus, .modal select:focus {
-  outline: none;
-  border-color: var(--accent-color);
-}
-
-/* CHECKLIST STYLES */
-.checklist {
-  margin-top: 10px;
-}
-
-.checklist-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.checklist-item input[type="checkbox"] {
-  width: auto;
-}
-
-.checklist-item input[type="text"] {
-  flex: 1;
-  padding: 6px;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid #444;
-}
-
-.checklist-item input[type="text"]:focus {
-  border-bottom-color: var(--accent-color);
-}
-
-.btn-add-subtask {
-  background: transparent;
-  border: 1px dashed #555;
-  color: #aaa;
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  margin-top: 5px;
-}
-
-.btn-add-subtask:hover {
-  border-color: #888;
-  color: #fff;
 }
 
 .modal-actions {
@@ -360,4 +296,42 @@ h1 {
   color: #aaa;
   font-size: 1.2rem;
   cursor: pointer;
+}
+
+/* Project List in Modal */
+.project-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+}
+
+.project-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid #333;
+}
+
+.project-item button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+}
+.project-item button:hover { color: #ff5555; }
+
+.add-project-form {
+  display: flex;
+  gap: 10px;
+}
+
+.add-project-form button {
+  white-space: nowrap;
+  background-color: #333;
+  color: white;
+  border: 1px solid #555;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0 15px;
 }
