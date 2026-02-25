@@ -53,7 +53,7 @@ function SortableItem({ task, project, onClick }) {
       style={style} 
       {...attributes} 
       {...listeners} 
-      className={`card proj-${task.projectId}`}
+      className={`card proj-${task.project_id || task.projectId}`}
       onClick={() => onClick(task)}
     >
       <h3>{task.title}</h3>
@@ -63,7 +63,7 @@ function SortableItem({ task, project, onClick }) {
         </div>
       )}
       <div className="card-meta">
-        <span className={`tag proj-${task.projectId}`}>{project?.title || 'Övrigt'}</span>
+        <span className={`tag proj-${task.project_id || task.projectId}`}>{project?.title || 'Övrigt'}</span>
         {task.date && (
           <span className="date-badge">
             📅 {task.date.slice(5)}
