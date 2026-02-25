@@ -247,7 +247,6 @@ function App() {
       });
   };
 
-  // Subtask helpers
   const addSubtask = () => {
     const newSub = { id: `s${Date.now()}`, text: '', done: false };
     setEditingTask({ ...editingTask, subtasks: [...(editingTask.subtasks || []), newSub] });
@@ -272,22 +271,24 @@ function App() {
   return (
     <div className="dashboard">
       <header>
-        <h1>JARVIS BOARD</h1>
-        
-        <div className="header-actions">
+        <div className="header-left">
+            <h1>JARVIS BOARD</h1>
+            
             <select 
                 className="project-filter"
                 value={filterProjectId}
                 onChange={(e) => setFilterProjectId(e.target.value)}
             >
-                <option value="all">All Projects</option>
+                <option value="all">Show All Projects</option>
                 {projects.map(p => (
                     <option key={p.id} value={p.id}>{p.title}</option>
                 ))}
             </select>
-
-            <button className="btn-projects" onClick={() => setShowProjectModal(true)} title="Manage Projects">
-                ⚙️
+        </div>
+        
+        <div className="header-right">
+            <button className="btn-projects" onClick={() => setShowProjectModal(true)}>
+                <span>⚙️</span> Projects
             </button>
         </div>
       </header>
