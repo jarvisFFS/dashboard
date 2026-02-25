@@ -1,22 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;500;600&display=swap');
 
 :root {
-  /* Blue Gradient Background */
-  --bg-gradient: linear-gradient(135deg, #0052cc, #0065ff, #2684ff);
+  /* Midnight Cyber Background */
+  --bg-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
   
   /* Column & Card Colors */
-  --column-bg: #ebecf0; /* Ljusgrå Trello-stil */
-  --card-bg: #ffffff;
-  --text-color: #172b4d;
-  --subtext-color: #5e6c84;
+  --column-bg: rgba(0, 0, 0, 0.3); /* Mörkare genomskinlig */
+  --card-bg: #2b2b2b; /* Mörkgrå kort */
+  --text-color: #e0e0e0;
   
   /* Accents */
-  --accent-color: #0052cc;
-  --todo-border: #ffab00;
-  --progress-border: #0052cc;
-  --done-border: #36b37e;
+  --accent-color: #bb86fc;
+  --todo-border: #ffcf44;
+  --progress-border: #3498db;
+  --done-border: #2ecc71;
   
-  /* Fonts */
+  /* Pastel Project Colors (CSS Variables) */
+  --proj-p1: #ffb7b2; /* Project Manager (Pastell Röd) */
+  --proj-p2: #b5ead7; /* InspoHub (Pastell Grön) */
+  --proj-p3: #c7ceea; /* Trading Script (Pastell Blå) */
+  --proj-p4: #e2f0cb; /* Övrigt (Pastell Gul) */
+
   --font-headers: 'Oswald', sans-serif;
   --font-body: 'Inter', sans-serif;
 }
@@ -38,11 +42,12 @@ body {
 
 header {
   padding: 15px 20px;
-  background-color: rgba(0, 0, 0, 0.2); /* Genomskinlig mörk header */
-  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
 h1 {
@@ -51,15 +56,13 @@ h1 {
   font-size: 1.2rem;
   color: #fff;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
 
 .user {
   font-family: var(--font-headers);
   color: #fff;
-  background: rgba(255,255,255,0.2);
-  padding: 4px 10px;
-  border-radius: 4px;
+  opacity: 0.7;
   font-size: 0.9rem;
 }
 
@@ -69,20 +72,20 @@ h1 {
   overflow-x: auto;
   padding: 20px;
   gap: 15px;
-  align-items: flex-start; /* Så kolumnerna inte dras ut i höjd */
+  align-items: flex-start;
 }
 
-/* Kolumnerna (Vita/Grå block) */
+/* Kolumner */
 .column {
   min-width: 280px;
   max-width: 320px;
   background-color: var(--column-bg);
-  border-radius: 12px; /* Mjuka hörn som på bilden */
+  border-radius: 12px;
   padding: 10px;
   display: flex;
   flex-direction: column;
   max-height: 90vh;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border: 1px solid rgba(255,255,255,0.05);
 }
 
 .column h2 {
@@ -90,101 +93,119 @@ h1 {
   font-size: 1rem;
   margin: 0;
   padding: 8px 4px 12px 8px;
-  color: #172b4d;
-  font-weight: 600;
+  color: #fff;
+  font-weight: 500;
   display: flex;
   justify-content: space-between;
-  align-items: center;
 }
 
-/* De små prickarna/ikonen uppe till höger på kolumnen */
-.column h2::after {
-  content: '•••';
-  font-family: sans-serif;
-  color: #6b778c;
-  font-size: 12px;
-  letter-spacing: 1px;
-  cursor: pointer;
-}
+.column.todo h2 { border-bottom: 2px solid var(--todo-border); }
+.column.progress h2 { border-bottom: 2px solid var(--progress-border); }
+.column.done h2 { border-bottom: 2px solid var(--done-border); }
 
 .card-list {
   flex: 1;
   overflow-y: auto;
-  padding: 0 4px;
+  padding: 10px 0;
   min-height: 50px;
 }
 
-/* Korten (Vita block) */
+/* Kort */
 .card {
   background-color: var(--card-bg);
   padding: 12px;
   margin-bottom: 10px;
-  border-radius: 8px; /* Mjuka hörn */
+  border-radius: 8px;
   cursor: grab;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1); /* Diskret skugga */
-  border: none;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.05);
   touch-action: none;
-  transition: transform 0.2s, box-shadow 0.2s;
   position: relative;
   overflow: hidden;
 }
 
+/* Project Color Stripe (Left) */
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 4px;
+  background-color: #888; /* Default fallback */
+}
+
+/* Dynamiska klasser för projektfärger */
+.card.proj-p1::before { background-color: var(--proj-p1); }
+.card.proj-p2::before { background-color: var(--proj-p2); }
+.card.proj-p3::before { background-color: var(--proj-p3); }
+.card.proj-p4::before { background-color: var(--proj-p4); }
+
 .card:hover {
-  background-color: #f8f9fa;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  background-color: #383838;
+  transform: translateY(-2px);
+  transition: all 0.2s;
 }
 
 .card.dragging {
   cursor: grabbing;
   opacity: 0.9;
-  transform: rotate(2deg);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  transform: rotate(2deg) scale(1.05);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.5);
   z-index: 999;
+  border: 1px solid var(--accent-color);
 }
 
 .card h3 {
   margin: 0 0 8px 0;
   font-size: 0.95rem;
   font-weight: 500;
-  color: #172b4d;
-  line-height: 1.4;
+  color: #fff;
 }
 
 .card-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
+/* Pastell Taggar */
 .tag {
   font-size: 0.7rem;
-  padding: 2px 6px;
-  border-radius: 3px;
-  background-color: #ebecf0; /* Ljusgrå tag */
-  color: #44546f;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #000; /* Svart text på pastell */
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/* Färga taggar baserat på projekt */
-/* Vi kan göra detta dynamiskt i JS, men här är en default style */
+.tag.proj-p1 { background-color: var(--proj-p1); }
+.tag.proj-p2 { background-color: var(--proj-p2); }
+.tag.proj-p3 { background-color: var(--proj-p3); }
+.tag.proj-p4 { background-color: var(--proj-p4); }
 
 .date-badge {
   font-size: 0.75rem;
-  color: #5e6c84;
+  color: #aaa;
+}
+
+/* Subtasks Progress Bar (Mini) på kortet */
+.subtask-progress {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: #888;
   display: flex;
   align-items: center;
-  gap: 4px;
-  background-color: transparent;
+  gap: 5px;
 }
 
 /* ADD BUTTON (+ Add a card) */
 .btn-add-task {
   margin-top: 4px;
-  background: transparent;
+  background: rgba(255,255,255,0.05);
   border: none;
-  color: #5e6c84;
-  padding: 10px 8px;
+  color: #aaa;
+  padding: 10px;
   border-radius: 8px;
   cursor: pointer;
   text-align: left;
@@ -194,46 +215,39 @@ h1 {
   align-items: center;
   gap: 8px;
   font-size: 0.9rem;
-  font-weight: 500;
-  width: 100%;
 }
 
 .btn-add-task:hover {
-  background-color: rgba(9, 30, 66, 0.08); /* Mörkare grå vid hover */
-  color: #172b4d;
+  background-color: rgba(255,255,255,0.1);
+  color: #fff;
 }
 
-.btn-add-task span {
-  font-size: 1.2rem;
-  font-weight: 400;
-  line-height: 1;
-}
-
-/* MODAL STYLES (Clean Light Mode) */
+/* MODAL (Dark Mode) */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(5px);
 }
 
 .modal {
-  background-color: #fff;
+  background-color: #1e1e1e;
   padding: 24px;
   border-radius: 12px;
   width: 90%;
   max-width: 500px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  border: none;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  border: 1px solid #333;
+  color: #fff;
 }
 
 .modal h2 {
   margin-top: 0;
-  color: #172b4d;
+  color: #fff;
   font-family: var(--font-headers);
   font-size: 1.2rem;
   margin-bottom: 20px;
@@ -244,7 +258,7 @@ h1 {
   margin-top: 16px;
   margin-bottom: 6px;
   font-size: 0.8rem;
-  color: #5e6c84;
+  color: #aaa;
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -252,20 +266,62 @@ h1 {
 .modal input, .modal select {
   width: 100%;
   padding: 10px 12px;
-  background-color: #fafbfc;
-  border: 2px solid #dfe1e6;
+  background-color: #2b2b2b;
+  border: 1px solid #444;
   border-radius: 4px;
-  color: #172b4d;
+  color: #fff;
   font-family: var(--font-body);
   font-size: 0.95rem;
   box-sizing: border-box;
-  transition: border-color 0.2s;
 }
 
 .modal input:focus, .modal select:focus {
   outline: none;
   border-color: var(--accent-color);
-  background-color: #fff;
+}
+
+/* CHECKLIST STYLES */
+.checklist {
+  margin-top: 10px;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.checklist-item input[type="checkbox"] {
+  width: auto;
+}
+
+.checklist-item input[type="text"] {
+  flex: 1;
+  padding: 6px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #444;
+}
+
+.checklist-item input[type="text"]:focus {
+  border-bottom-color: var(--accent-color);
+}
+
+.btn-add-subtask {
+  background: transparent;
+  border: 1px dashed #555;
+  color: #aaa;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-top: 5px;
+}
+
+.btn-add-subtask:hover {
+  border-color: #888;
+  color: #fff;
 }
 
 .modal-actions {
@@ -273,42 +329,34 @@ h1 {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  border-top: 1px solid #ebecf0;
+  border-top: 1px solid #333;
   padding-top: 20px;
 }
 
 .btn-save {
   background-color: var(--accent-color);
-  color: #fff;
+  color: #000;
   border: none;
   padding: 8px 20px;
   border-radius: 4px;
-  font-family: var(--font-body);
   font-weight: 600;
-  font-size: 0.9rem;
   cursor: pointer;
 }
 
-.btn-save:hover {
-  background-color: #0047b3;
-}
-
 .btn-delete {
-  background-color: #ffebe6;
-  color: #de350b;
-  border: none;
+  background-color: rgba(255, 85, 85, 0.1);
+  color: #ff5555;
+  border: 1px solid #ff5555;
   padding: 8px 16px;
   border-radius: 4px;
-  font-family: var(--font-body);
   font-weight: 600;
-  font-size: 0.9rem;
   cursor: pointer;
 }
 
 .btn-close {
   background: transparent;
   border: none;
-  color: #5e6c84;
+  color: #aaa;
   font-size: 1.2rem;
   cursor: pointer;
 }

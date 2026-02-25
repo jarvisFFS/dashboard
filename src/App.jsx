@@ -27,11 +27,18 @@ const initialProjects = [
 ];
 
 const initialTasks = [
-  { id: 't1', projectId: 'p1', title: 'Sätta upp React-projekt', status: 'done', date: '2026-02-24' },
-  { id: 't2', projectId: 'p1', title: 'Skapa Kanban-vy', status: 'progress', date: '2026-02-25' },
-  { id: 't3', projectId: 'p2', title: 'Fixa "Explore"-sidan', status: 'done', date: '2026-02-23' },
-  { id: 't4', projectId: 'p2', title: 'Länka till produkter', status: 'todo', date: '' },
-  { id: 't5', projectId: 'p3', title: 'Bestämma strategi', status: 'todo', date: '2026-02-28' },
+  { 
+    id: 't1', 
+    projectId: 'p1', 
+    title: 'Sätta upp React-projekt', 
+    status: 'done', 
+    date: '2026-02-24',
+    subtasks: [{ id: 's1', text: 'Installera Vite', done: true }, { id: 's2', text: 'Konfa CSS', done: true }]
+  },
+  { id: 't2', projectId: 'p1', title: 'Skapa Kanban-vy', status: 'progress', date: '2026-02-25', subtasks: [] },
+  { id: 't3', projectId: 'p2', title: 'Fixa "Explore"-sidan', status: 'done', date: '2026-02-23', subtasks: [] },
+  { id: 't4', projectId: 'p2', title: 'Länka till produkter', status: 'todo', date: '', subtasks: [] },
+  { id: 't5', projectId: 'p3', title: 'Bestämma strategi', status: 'todo', date: '2026-02-28', subtasks: [] },
 ];
 
 // --- KOMPONENTER ---
@@ -49,8 +56,12 @@ function SortableItem({ task, project, onClick }) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.0 : 1, // Gör originalkortet osynligt när vi drar
+    opacity: isDragging ? 0.0 : 1,
   };
+
+  // Beräkna progress (antal klara / totalt)
+  const totalSub = task.subtasks?.length || 0;
+  const doneSub = task.subtasks?.filter(s => s.done).length || 0;
 
   return (
     <div 
@@ -58,15 +69,23 @@ function SortableItem({ task, project, onClick }) {
       style={style} 
       {...attributes} 
       {...listeners} 
-      className="card"
+      className={`card proj-${task.projectId}`} // Klass för färg
       onClick={() => onClick(task)}
     >
       <h3>{task.title}</h3>
+      
+      {/* Visa progress om subtasks finns */}
+      {totalSub > 0 && (
+        <div className="subtask-progress">
+          ☑ {doneSub}/{totalSub}
+        </div>
+      )}
+
       <div className="card-meta">
-        <span className="tag">{project?.title || 'Övrigt'}</span>
+        <span className={`tag proj-${task.projectId}`}>{project?.title || 'Övrigt'}</span>
         {task.date && (
           <span className="date-badge">
-            📅 {task.date.slice(5)} {/* Visa bara månad-dag */}
+            📅 {task.date.slice(5)}
           </span>
         )}
       </div>
@@ -136,9 +155,26 @@ function App() {
           id: 'new',
           title: '',
           projectId: 'p4',
-          status: status, // Sätt status baserat på vilken kolumn vi klickade i
-          date: new Date().toISOString().split('T')[0]
+          status: status,
+          date: new Date().toISOString().split('T')[0],
+          subtasks: []
       });
+  };
+
+  // --- Subtask funktioner ---
+  const addSubtask = () => {
+    const newSub = { id: `s${Date.now()}`, text: '', done: false };
+    setEditingTask({ ...editingTask, subtasks: [...(editingTask.subtasks || []), newSub] });
+  };
+
+  const updateSubtask = (id, field, value) => {
+    const updated = editingTask.subtasks.map(s => s.id === id ? { ...s, [field]: value } : s);
+    setEditingTask({ ...editingTask, subtasks: updated });
+  };
+
+  const removeSubtask = (id) => {
+    const updated = editingTask.subtasks.filter(s => s.id !== id);
+    setEditingTask({ ...editingTask, subtasks: updated });
   };
 
   return (
@@ -157,7 +193,7 @@ function App() {
         <main className="board">
           {['todo', 'progress', 'done'].map(status => (
             <div key={status} className={`column ${status}`}>
-              <h2>{status === 'todo' ? 'To Do' : status === 'progress' ? 'This week' : 'Done'}</h2>
+              <h2>{status === 'todo' ? 'To Do' : status === 'progress' ? 'In Progress' : 'Done'}</h2>
               
               <SortableContext 
                 id={status} 
@@ -176,9 +212,8 @@ function App() {
                 </div>
               </SortableContext>
 
-              {/* + Add a card i VARJE kolumn */}
               <button className="btn-add-task" onClick={() => addNewTask(status)}>
-                  <span>+</span> Add a card
+                  <span>+</span> Add Task
               </button>
             </div>
           ))}
@@ -208,7 +243,7 @@ function App() {
               autoFocus
               value={editingTask.title} 
               onChange={e => setEditingTask({...editingTask, title: e.target.value})}
-              placeholder="What needs to be done?"
+              placeholder="Vad ska göras?"
             />
 
             <label>Project</label>
@@ -220,6 +255,27 @@ function App() {
                 <option key={p.id} value={p.id}>{p.title}</option>
               ))}
             </select>
+
+            <label>Checklist</label>
+            <div className="checklist">
+              {(editingTask.subtasks || []).map(sub => (
+                <div key={sub.id} className="checklist-item">
+                  <input 
+                    type="checkbox" 
+                    checked={sub.done} 
+                    onChange={e => updateSubtask(sub.id, 'done', e.target.checked)}
+                  />
+                  <input 
+                    type="text" 
+                    value={sub.text} 
+                    onChange={e => updateSubtask(sub.id, 'text', e.target.value)}
+                    placeholder="Delmål..."
+                  />
+                  <button onClick={() => removeSubtask(sub.id)} style={{background:'none', border:'none', cursor:'pointer'}}>🗑️</button>
+                </div>
+              ))}
+              <button className="btn-add-subtask" onClick={addSubtask}>+ Add Item</button>
+            </div>
 
             <label>Due Date</label>
             <input 
