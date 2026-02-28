@@ -26,6 +26,13 @@ const assignees = [
   { id: 'malin', name: 'Malin', emoji: '👩' }
 ];
 
+const initialProjects = [
+  { id: 'p1', title: 'Project Manager' },
+  { id: 'p2', title: 'InspoHub' },
+  { id: 'p3', title: 'Trading Script' },
+  { id: 'p4', title: 'Övrigt' }
+];
+
 // --- KOMPONENTER ---
 
 function DroppableColumn({ id, title, children, onAddTask }) {
@@ -143,6 +150,7 @@ function App() {
 
     const { data: projData, error: projError } = await supabase
       .from('projects')
+      * 
       .select('*')
       .order('created_at', { ascending: true });
 
@@ -259,7 +267,8 @@ function App() {
           projectId: projects[0]?.id || 'p4',
           status: status,
           date: new Date().toISOString().split('T')[0],
-          subtasks: []
+          subtasks: [],
+          assignee: 'oscar'
       });
   };
 
@@ -280,10 +289,46 @@ function App() {
       ? tasks 
       : tasks.filter(t => (t.project_id || t.projectId) === filterProjectId);
 
+  const handleLogin = () => {
+    if (username === 'Admin' && password === 'Charlie1') {
+      setIsAuthenticated(true);
+      setError('');
+    } else {
+      setError('Invalid username or password');
+    }
+  };
+
   if (loading && tasks.length === 0) {
       return <div className="dashboard" style={{justifyContent:'center', alignItems:'center'}}><h1>Laddar Dashboard...</h1></div>
   }
 
+  // --- RETURN DEN ULTIMATA RENDER-LOGIKEN ---
+  if (!isAuthenticated) {
+      // Visa inloggningssidan om inte inloggad
+      return (
+        <div className="login-page">
+          <div className="login-modal">
+            <h2>Login</h2>
+            <input 
+              type="text" 
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            <input 
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button onClick={handleLogin}>Log In</button>
+            {error && <p className="error-message">{error}</p>}
+          </div>
+        </div>
+      );
+  }
+
+  // Om inloggad, visa huvudappen
   return (
     <div className="dashboard">
       <header>
