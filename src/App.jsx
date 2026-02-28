@@ -26,7 +26,7 @@ const assignees = [
   { id: 'malin', name: 'Malin', emoji: '👩' }
 ];
 
-// --- COMPONENTS ---
+// --- KOMPONENTER ---
 
 function DroppableColumn({ id, title, children, onAddTask }) {
   const { setNodeRef } = useDroppable({ id });
@@ -63,7 +63,7 @@ function SortableItem({ task, project, onClick }) {
   const totalSub = task.subtasks?.length || 0;
   const doneSub = task.subtasks?.filter(s => s.done).length || 0;
 
-  // Generate a color based on project ID
+  // Generera en färg baserat på projekt-ID
   const getProjectColor = (pid) => {
       if (!pid) return '#ccc';
       if (pid === 'p1') return '#ffb7b2';
@@ -120,6 +120,10 @@ function App() {
   const [newProjectTitle, setNewProjectTitle] = useState('');
   const [filterProjectId, setFilterProjectId] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -255,8 +259,7 @@ function App() {
           projectId: projects[0]?.id || 'p4',
           status: status,
           date: new Date().toISOString().split('T')[0],
-          subtasks: [],
-          assignee: 'oscar'
+          subtasks: []
       });
   };
 
@@ -394,7 +397,7 @@ function App() {
                 <div key={sub.id} className="checklist-item">
                   <input 
                     type="checkbox" 
-                    checked={sub.done} 
+                    checked={sub.done}
                     onChange={e => updateSubtask(sub.id, 'done', e.target.checked)}
                   />
                   <input 
@@ -422,38 +425,6 @@ function App() {
               )}
               <div style={{flex:1}}></div>
               <button className="btn-save" onClick={() => saveTaskToDb(editingTask)}>Save</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* PROJECT MANAGER MODAL */}
-      {showProjectModal && (
-        <div className="modal-overlay" onClick={() => setShowProjectModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                <h2>Manage Projects</h2>
-                <button className="btn-close" onClick={() => setShowProjectModal(false)}>✕</button>
-            </div>
-
-            <div className="project-list">
-                {projects.map(p => (
-                    <div key={p.id} className="project-item">
-                        <span>{p.title}</span>
-                        <button onClick={() => deleteProject(p.id)}>🗑️</button>
-                    </div>
-                ))}
-            </div>
-
-            <label>Add New Project</label>
-            <div className="add-project-form">
-                <input 
-                    type="text" 
-                    value={newProjectTitle}
-                    onChange={(e) => setNewProjectTitle(e.target.value)}
-                    placeholder="Project Name..."
-                />
-                <button onClick={addProject}>Add</button>
             </div>
           </div>
         </div>
