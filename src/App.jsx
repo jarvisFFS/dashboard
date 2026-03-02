@@ -26,13 +26,6 @@ const assignees = [
   { id: 'malin', name: 'Malin', emoji: '👩' }
 ];
 
-const initialProjects = [
-  { id: 'p1', title: 'Project Manager' },
-  { id: 'p2', title: 'InspoHub' },
-  { id: 'p3', title: 'Trading Script' },
-  { id: 'p4', title: 'Övrigt' }
-];
-
 // --- KOMPONENTER ---
 
 function DroppableColumn({ id, title, children, onAddTask }) {
@@ -73,13 +66,16 @@ function SortableItem({ task, project, onClick }) {
   // Generera en färg baserat på projekt-ID
   const getProjectColor = (pid) => {
       if (!pid) return '#ccc';
-      if (pid === 'p1') return '#ffb7b2';
-      if (pid === 'p2') return '#b5ead7';
-      if (pid === 'p3') return '#c7ceea';
-      if (pid === 'p4') return '#e2f0cb';
+      // Fördefinierade färger för kända projekt
+      if (pid === 'p1') return '#ffb7b2'; // Project Manager (Pastell Röd)
+      if (pid === 'p2') return '#b5ead7'; // InspoHub (Pastell Grön)
+      if (pid === 'p3') return '#c7ceea'; // Trading Script (Pastell Blå)
+      if (pid === 'p4') return '#e2f0cb'; // Övrigt (Pastell Gul)
+      if (pid === 'jarvis-project-id') return '#f9e7b8'; // En pastellgul för Jarvis
       
+      // Enkel hash för nya projekt om färgen inte är fördefinierad
       const hash = pid.split('').reduce((acc, char) => char.charCodeAt(0) + acc, 0);
-      const hues = [200, 150, 300, 60, 25]; 
+      const hues = [200, 150, 300, 60, 25]; // Försöker sprida ut färger
       const hue = hues[hash % hues.length];
       return `hsl(${hue}, 70%, 80%)`; 
   };
@@ -127,10 +123,6 @@ function App() {
   const [newProjectTitle, setNewProjectTitle] = useState('');
   const [filterProjectId, setFilterProjectId] = useState('all');
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -150,7 +142,6 @@ function App() {
 
     const { data: projData, error: projError } = await supabase
       .from('projects')
-      * 
       .select('*')
       .order('created_at', { ascending: true });
 
@@ -164,10 +155,12 @@ function App() {
   const addProject = async () => {
       if (!newProjectTitle.trim()) return;
       const newId = `p${Date.now()}`;
+      // Här lägger vi till en standard-färg för nya projekt
+      const projectColor = getProjectColor(newId);
       const { error } = await supabase.from('projects').insert({ id: newId, title: newProjectTitle });
       if (error) console.error('Error adding project:', error);
       else {
-          setProjects([...projects, { id: newId, title: newProjectTitle }]);
+          setProjects([...projects, { id: newId, title: newProjectTitle, color: projectColor }]); // Spara färgen med projektet
           setNewProjectTitle('');
       }
   };
@@ -264,11 +257,10 @@ function App() {
       setEditingTask({
           id: 'new',
           title: '',
-          projectId: projects[0]?.id || 'p4',
+          projectId: projects.length > 0 ? projects[0].id : 'p4', // Använd första projektet om det finns, annars default
           status: status,
           date: new Date().toISOString().split('T')[0],
-          subtasks: [],
-          assignee: 'oscar'
+          subtasks: []
       });
   };
 
@@ -289,46 +281,10 @@ function App() {
       ? tasks 
       : tasks.filter(t => (t.project_id || t.projectId) === filterProjectId);
 
-  const handleLogin = () => {
-    if (username === 'Admin' && password === 'Charlie1') {
-      setIsAuthenticated(true);
-      setError('');
-    } else {
-      setError('Invalid username or password');
-    }
-  };
-
   if (loading && tasks.length === 0) {
       return <div className="dashboard" style={{justifyContent:'center', alignItems:'center'}}><h1>Laddar Dashboard...</h1></div>
   }
 
-  // --- RETURN DEN ULTIMATA RENDER-LOGIKEN ---
-  if (!isAuthenticated) {
-      // Visa inloggningssidan om inte inloggad
-      return (
-        <div className="login-page">
-          <div className="login-modal">
-            <h2>Login</h2>
-            <input 
-              type="text" 
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-            <input 
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <button onClick={handleLogin}>Log In</button>
-            {error && <p className="error-message">{error}</p>}
-          </div>
-        </div>
-      );
-  }
-
-  // Om inloggad, visa huvudappen
   return (
     <div className="dashboard">
       <header>
@@ -470,6 +426,38 @@ function App() {
               )}
               <div style={{flex:1}}></div>
               <button className="btn-save" onClick={() => saveTaskToDb(editingTask)}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PROJECT MANAGER MODAL */}
+      {showProjectModal && (
+        <div className="modal-overlay" onClick={() => setShowProjectModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                <h2>Manage Projects</h2>
+                <button className="btn-close" onClick={() => setShowProjectModal(false)}>✕</button>
+            </div>
+
+            <div className="project-list">
+                {projects.map(p => (
+                    <div key={p.id} className="project-item">
+                        <span>{p.title}</span>
+                        <button onClick={() => deleteProject(p.id)}>🗑️</button>
+                    </div>
+                ))}
+            </div>
+
+            <label>Add New Project</label>
+            <div className="add-project-form">
+                <input 
+                    type="text" 
+                    value={newProjectTitle}
+                    onChange={(e) => setNewProjectTitle(e.target.value)}
+                    placeholder="Project Name..."
+                />
+                <button onClick={addProject}>Add</button>
             </div>
           </div>
         </div>
